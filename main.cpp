@@ -1,20 +1,8 @@
-#include <Arduino.h>
-
-#include <Wire.h>
 #include <LiquidCrystal_I2C.h>
 #include <Keypad.h>
 
 LiquidCrystal_I2C lcd(0x27, 16, 2); // set the LCD address to 0x27 for a 16 chars and 2 line display
-byte customChar[8] = {
-  0b00000,
-  0b01010,
-  0b11111,
-  0b11111,
-  0b01110,
-  0b00100,
-  0b00000,
-  0b00000
-};
+
 
 const byte rows = 4; //four rows
 const byte cols = 4; //three columns
@@ -36,11 +24,12 @@ void reset();
 
 void setup()
 {
-  lcd.init();         // initialize the lcd
+  lcd.begin();         // initialize the lcd
   lcd.backlight();    // Turn on the LCD screen backlight
   pinMode(10, OUTPUT);
   pinMode(11, INPUT);
   start_display();
+  digitalWrite(2,HIGH);
 }
 
 void loop()
