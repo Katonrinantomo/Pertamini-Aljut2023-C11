@@ -1,0 +1,28 @@
+#define BUTTON_PIN 13
+
+byte lastButtonState;
+
+unsigned long lastTimeButtonStateChanged = millis();
+unsigned long debounceDuration = 50;
+int i = 0;
+
+void setup() {
+  pinMode(BUTTON_PIN, INPUT);
+  Serial.begin(9600);
+  lastButtonState = digitalRead(BUTTON_PIN);
+}
+
+void loop() {
+  if (millis() - lastTimeButtonStateChanged >= debounceDuration) {
+    byte buttonState = digitalRead(BUTTON_PIN);
+    if (buttonState != lastButtonState) {
+    lastTimeButtonStateChanged = millis();
+    lastButtonState = buttonState;
+    if (buttonState == LOW) {
+      i++;
+      Serial.print("Button has been released");
+      Serial.println(i);
+      }
+    }
+  }
+}
