@@ -1,87 +1,111 @@
 #include <LiquidCrystal_I2C.h>
 #include <Keypad.h>
+#include <Wire.h>
 
-LiquidCrystal_I2C lcd(0x27, 16, 2); // set the LCD address to 0x27 for a 16 chars and 2 line display
 
+LiquidCrystal_I2C lcd(0x27, 16, 2); 
 
-const byte rows = 4; //four rows
-const byte cols = 4; //three columns
+const byte RELAY = 10;
+const byte BUTTON = 11;
+const byte batasHarga = 7;
+const byte rows = 4; 
+const byte cols = 4; 
 char keys[rows][cols] = {
   {'1','2','3','A'},
   {'4','5','6','B'},
   {'7','8','9','C'},
   {'*','0','#','D'}
 };
-byte rowPins[rows] = {9, 8, 7, 6}; // connect to the row pinouts of the keypad
-byte colPins[cols] = {5, 4, 3, 2}; // connect to the column pinouts of the keypad
+byte rowPins[rows] = {9, 8, 7, 6}; 
+byte colPins[cols] = {5, 4, 3, 2}; 
 Keypad keypad = Keypad( makeKeymap(keys), rowPins, colPins, rows, cols );
 
-
-int cursor = 3;
-
-void start_display();
-void reset();
+byte cursor = 3;
+char counter[batasHarga];
+byte inputKey = 0;
+int showNumber = 0;
 
 void setup()
 {
-  lcd.begin();         // initialize the lcd
-  lcd.backlight();    // Turn on the LCD screen backlight
-  pinMode(10, OUTPUT);
-  pinMode(11, INPUT);
-  start_display();
-  digitalWrite(2,HIGH);
+  lcd.begin();         
+  lcd.backlight();    
+  pinMode(RELAY, OUTPUT);
+  pinMode(BUTTON, INPUT);
+  start_display("Masukkan Nominal","Input");
+  Serial.begin(9600);
 }
 
 void loop()
 {
-  char key = keypad.getKey();
-  if(key == '*') {
-    reset();
-    return;
-  }
-
-  if(key == '#') {
-    bool but = true;
+  char customKey = keypad.getKey();
+  if (customKey=='#'){
     lcd.clear();
-    lcd.print("Harap Menunggu");
-    do {
-    if (digitalRead(11) == LOW) {
-      but = false;
-    }
-    } while(but);
-    // lcd.createChar(0, customChar);
-    // lcd.write((byte)0);
-    digitalWrite(10, HIGH);
-    for (int i = 0; i <= 1000; i++) {
-      lcd.setCursor(0, 1);
-      lcd.print(i);
-      delay(1);
-    }
-    digitalWrite(10, LOW);
-  } 
+    start_display("Silakan Isi","NozzleReady");
+  }
+  if (customKey) {
 
-  if(cursor > 9) {
-    return;
+    if ((cursor <= 9) && (0 < customKey <= 9)){
+    counter[inputKey]=customKey;
+    lcd.setCursor(cursor,1);
+    lcd.print(counter[inputKey]);
+    inputKey++;
+    cursor++;
+    }
+  }
+  
+  if (digitalRead(BUTTON)==HIGH){
+      int prCounter = atoi(counter);
+      if (showNumber <= prCounter){
+        lcd.setCursor(0, 1);
+        lcd.print(showNumber);
+        showNumber++;
+    }
   }
 
-  if (key != NO_KEY) {
-  lcd.setCursor(cursor, 1);
-  lcd.print(key);
-  cursor++;
-  }
-
+  
+  // start_display();
+  // char customKey = keypad.getKey();
+  // static int i=0;
+  // if (digitalRead(11)==LOW){
+  //   i++;
+  //   Serial.print("Zaky Afrizal");
+  //   Serial.println(i);
+  //   delay(1000);
+  // }
+  // if (customKey){
+  //   if(cursor>9){
+  //     return;
+  //   }
+  //   lcd.setCursor(cursor,1);
+  //   Data1[nominal]=customKey;
+  //   lcd.print(Data1[nominal]);
+  //   cursor++;
+  // }
+  // switch (customKey)
+  // {
+  //   case '*':
+  //   lcd.clear();
+    
+  //   break;
+    
+  // }
+  
 }
 
-void start_display() {
+void start_display(char message[],char idleState[]) {
+  lcd.clear();
   lcd.setCursor(0, 0);
-  lcd.print("Masukkan Nominal");
+  lcd.print(message);
   lcd.setCursor(0, 1);
-  lcd.print("Rp. ");
+  if (idleState=="Input") {
+      lcd.print("Rp.");
+  } else if (idleState=="NozzleReady") {
+      lcd.clear();
+  lcd.print(message);
+  lcd.setCursor(0, 1);
+    } else if (idleState=="End"){
+      lcd.print("Terima Kasih");
+      }
+    
 }
 
-void reset() {
-    digitalWrite(10, LOW);
-    lcd.clear();
-    start_display();
-    cursor = 3;
-}
