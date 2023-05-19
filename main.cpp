@@ -1,48 +1,48 @@
-#include <LiquidCrystal_I2C.h>
-#include <Keypad.h>
-#include <Wire.h>
+#include <LiquidCrystal_I2C.h>       //memanggil library LCD
+#include <Keypad.h>                  //memanggil library Keypad
+#include <Wire.h>                    //memanggil lirary serial komunikaai lcd
 
-LiquidCrystal_I2C lcd(0x27, 16, 2);
+LiquidCrystal_I2C lcd(0x27, 16, 2);   // setting alamat 12C(0X27), besar karakter untuk LCD 16X2 
 
-const byte RELAY = 10;
-const byte BUTTON = 11;
-const byte batasHarga = 7;
-const byte rows = 4;
-const byte cols = 4;
+const byte RELAY = 10;                //inisialisasi pin RELAY yang dihubungkan pompa mini 
+const byte BUTTON = 11;               //inisialiasi pin button 
+const byte batasHarga = 7;            //inisialisasi variabel batasan nilai yang nanti di inputkan bernilai 7 pada saat ditampilkan di LCD
+const byte rows = 4;                  //inisialisasi jumlah baris keypad
+const byte cols = 4;                  //inisialisasi jumlah kolom keypad
 char keys[rows][cols] = {
-  {'1','2','3','A'},
-  {'4','5','6','B'},
-  {'7','8','9','C'},
-  {'*','0','#','D'}
+  {'1','2','3','A'},                  //inisialisasi baris pertama keypad
+  {'4','5','6','B'},                  //inisialisasi baris kedua keypad
+  {'7','8','9','C'},                  //inisialisasi baris ketiga keypad
+  {'*','0','#','D'}                   //inisialisasi baris keempat keypad
 };
-byte rowPins[rows] = {9, 8, 7, 6}; 
-byte colPins[cols] = {5, 4, 3, 2}; 
-Keypad keypad = Keypad( makeKeymap(keys), rowPins, colPins, rows, cols );
+byte rowPins[rows] = {9, 8, 7, 6};    //inisialisasi pin digital baris keypad
+byte colPins[cols] = {5, 4, 3, 2};    //inisialisasi oin digital kolom keypad
+Keypad keypad = Keypad( makeKeymap(keys), rowPins, colPins, rows, cols );    //inisialisasi pin baris, pin kolom, baris, kolom
 
-int cursor = 3;
-char counter[batasHarga];
-byte inputKey = 0;
-int showNumber = 0;
+int cursor = 3;                       //inialisasi cursor LCD bernilai 3
+char counter[batasHarga];             //membuat variabel batasHarga menjadi array
+byte inputKey = 0;                    //
+int showNumber = 0;                   //
 
 void setup()
 {
-  lcd.begin();         
-  lcd.backlight();
-  pinMode(RELAY, OUTPUT);
-  pinMode(BUTTON, INPUT);
-  Serial.begin(9600);
-  start_display("Masukkan Nominal","Input");
+  lcd.begin();                        //inisialisasi LCD
+  lcd.backlight();                    //menghidupkan LCD
+  pinMode(RELAY, OUTPUT);             //mengsetup variabel RELAY sebagai OUTPUT
+  pinMode(BUTTON, INPUT);             //mengsetup variabel BUTTON sebagai INPUT
+  Serial.begin(9600);                 //inialisasi Kode serial di 9600
+  start_display("Masukkan Nominal","Input");  //memanggil function start_display, menjadikannya input, lalu menampilkan "masukkan nominal" pada LCD
 }
 
 void loop()
 {
-  char customKey = keypad.getKey();
-  if (customKey=='#'){
-    start_display("Silakan Isi","NozzleReady");
-  } else if (customKey == '*') {
-      memset(counter, 0, sizeof(counter));
-      cursor = 3;
-      inputKey = 0;
+  char customKey = keypad.getKey();               //menginsialisasi variabel customkey sebagai keypad
+  if (customKey=='#'){                            //jika variabel customkey inputan terakhirnya '#', maka lakukan perintah seperti di bawah(ENTER) 
+    start_display("Silakan Isi","NozzleReady");   //memanggil function start_display(),minampilkan "silahkan isi" pada LCD
+  } else if (customKey == '*') {                  //selain jika variabel customkey inputan terkahirnya '*' maka lakukan perintah seperti di bawah(RESET)
+      memset(counter, 0, sizeof(counter));        //menggantikan/mengereset variabel counter menjadi 0, dan mereset/menggantikan array counter
+      cursor = 3;                                 //inisialiasi cursor LCD bernilai 3
+      inputKey = 0;                               //
       showNumber = 0;
       start_display("Masukkan Nominal","Input");
   } else if (customKey) {
