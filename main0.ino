@@ -2,98 +2,129 @@
 #include <Keypad.h>
 #include <Wire.h>
 
+// Konfigurasi Modul
+
+// LCD
 LiquidCrystal_I2C lcd(0x27, 16, 2);
 
-unsigned long myTime;
-const byte RELAY = 10;
-const byte BUTTON = 11;
-const byte batasHarga = 7;
-const byte rows = 4;
-const byte cols = 4;
-char keys[rows][cols] = {
+// Keypad
+const byte ROWS = 4;
+const byte COLUMNS = 4;
+char keys[ROWS][COLUMNS] = {
   {'1','2','3','A'},
   {'4','5','6','B'},
   {'7','8','9','C'},
   {'*','0','#','D'}
 };
-byte rowPins[rows] = {9, 8, 7, 6}; 
-byte colPins[cols] = {5, 4, 3, 2}; 
-Keypad keypad = Keypad( makeKeymap(keys), rowPins, colPins, rows, cols );
+byte rowPins[ROWS] = {9, 8, 7, 6}; 
+byte colPins[COLUMNS] = {5, 4, 3, 2}; 
+Keypad keypad = Keypad( makeKeymap(keys), rowPins, colPins, ROWS, COLUMNS );
 
-int cursor = 3;
-char counter[batasHarga];
-byte inputKey = 0;
-float showNumber = 0;
-int toRound;
 
+// Inisialisasi
+#define RELAY 10
+#define BUTTON 11
+#define BUZZER 12
+char hargaBeli[7]; // Max 9999999 atau 7 Digit
+byte cursor = 3;
+byte nominal = 0;
+unsigned int counter = 0;
+unsigned int counterLimit = 0;
+bool nozzleReady = false;
+enum LCD_STATE {INPUTNOMINAL, NOZZLEREADY, INVALID};
+
+// Fungsi Reset
 void (* resetFunc) (void) = 0;
 
 void setup()
 {
-  lcd.begin();         
-  lcd.backlight();
   pinMode(RELAY, OUTPUT);
   pinMode(BUTTON, INPUT);
+  pinMode(BUZZER, OUTPUT);
   Serial.begin(9600);
+
+  lcd.begin();         
+  lcd.backlight();
   digitalWrite(RELAY, HIGH);
-  start_display("Masukkan Nominal","Input");
+  start_display("Masukkan Nominal", INPUTNOMINAL);
 }
 
 void loop()
 {
   digitalWrite(RELAY, HIGH);
   char customKey = keypad.getKey();
-  if (customKey=='#'){
-    start_display("Silakan Isi","NozzleReady");
+  if (customKey=='A') {
+    setHargaBeli("5000");
+  } else if (customKey=='B') {
+    setHargaBeli("10000");
+  } else if (customKey=='C') {
+    setHargaBeli("15000");
+  } else if (customKey=='D') {
+    setHargaBeli("20000");
+  } else if (customKey=='#'){
+    counterLimit = atoi(hargaBeli);
+    if (counterLimit < 1000) {
+      start_display("Minimal 1000", INVALID);
+    } else {
+      start_display("Silakan Isi", NOZZLEREADY);
+    }
   } else if (customKey == '*') {
-      // memset(counter, 0, sizeof(counter));
-      // cursor = 3;
-      // inputKey = 0;
-      // showNumber = 0;
-      // toRound = 0;
       resetFunc();
   } else if (customKey) {
     if (cursor <= 9){
-    counter[inputKey]=customKey;
-    lcd.setCursor(cursor,1);
-    lcd.print(counter[inputKey]);
-    inputKey++;
-    cursor++;
+      hargaBeli[nominal]=customKey;
+      lcd.setCursor(cursor,1);
+      lcd.print(hargaBeli[nominal]);
+      nominal++;
+      cursor++;
     }
   }
   
-  if ((int(showNumber) != 0) && (int(showNumber)%1000==0)) {
-        toRound = int(showNumber)/1000;
-  }
-  if (digitalRead(BUTTON)==HIGH){
-      int prCounter = atoi(counter);
-      if (showNumber <= prCounter){
+  if ((digitalRead(BUTTON)==HIGH) && nozzleReady){
+      if (counter <= counterLimit){
         digitalWrite(RELAY, LOW);
-        myTime = millis();
-        Serial.println(myTime);
         lcd.setCursor(0, 1);
-        lcd.print(showNumber);
-        showNumber+=100;
-        delay(29);
-        // showNumber+=(4.4*(toRound+1))*0.815-(toRound+1);
-        // Serial.println((4.4*(toRound+1))*0.815-(toRound+1));
-    }
+        lcd.print(counter);
+        counter+=100;
+        delay(35);
+      }
   }
   
 }
 
-void start_display(char message[],char idleState[]) {
+// Fungsi Mode LCD
+void start_display(char message[], LCD_STATE lcdState) {
   lcd.clear();
   lcd.setCursor(0, 0);
-  lcd.print(message);
-  lcd.setCursor(0, 1);
-  if (idleState=="Input") {
-    lcd.print("Rp.");
-  } else if (idleState=="NozzleReady") {
-    lcd.clear();
-    lcd.print(message);
-    lcd.setCursor(0, 1);
-    } else if (idleState=="End"){
-      lcd.print("Terima Kasih");
-    }
+
+  switch (lcdState) {
+    case INPUTNOMINAL:
+      lcd.print(message);
+      lcd.setCursor(0, 1);
+      lcd.print("Rp.");
+      break;
+    case NOZZLEREADY:
+      nozzleReady = true;
+      lcd.clear();
+      lcd.print(message);
+      lcd.setCursor(0, 1);
+      break;
+    case INVALID:
+      tone(BUZZER, 4000);
+      delay(100);
+      noTone(BUZZER);
+      lcd.clear();
+      lcd.print(message);
+      delay(1500);
+      resetFunc();
+      break;    
+  }
+}
+
+void setHargaBeli(String nominal) {
+  memset(hargaBeli, 0, sizeof(hargaBeli));
+  for(int i = 0; i<=nominal.length(); i++) {
+    hargaBeli[i] = nominal[i];
+  }
+
 }
