@@ -25,6 +25,7 @@ Keypad keypad = Keypad( makeKeymap(keys), rowPins, colPins, ROWS, COLUMNS );
 #define RELAY 10
 #define BUTTON 11
 #define BUZZER 12
+#define SHELL_BUTTON 13
 char hargaBeli[7]; // Max 9999999 atau 7 Digit
 byte cursor = 3;
 byte nominal = 0;
@@ -41,6 +42,7 @@ void setup()
   pinMode(RELAY, OUTPUT);
   pinMode(BUTTON, INPUT);
   pinMode(BUZZER, OUTPUT);
+  pinMode(SHELL_BUTTON, INPUT);
   Serial.begin(9600);
 
   lcd.begin();         
@@ -51,6 +53,9 @@ void setup()
 
 void loop()
 {
+  if(digitalRead(SHELL_BUTTON)==HIGH) {
+    return;
+  }
   digitalWrite(RELAY, HIGH);
   char customKey = keypad.getKey();
   if (customKey=='A') {
@@ -78,6 +83,7 @@ void loop()
       nominal++;
       cursor++;
     }
+    Serial.println(customKey);
   }
   
   if ((digitalRead(BUTTON)==HIGH) && nozzleReady){
