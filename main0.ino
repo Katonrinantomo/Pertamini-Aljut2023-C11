@@ -1,11 +1,11 @@
-#include <LiquidCrystal_I2C.h>
-#include <Keypad.h>
-#include <Wire.h>
+#include <LiquidCrystal_I2C.h>                  //memanggil library LCD
+#include <Keypad.h>                            //memanggil library Keypad
+#include <Wire.h>                             //memanggil lirary serial komunikaai 
 
 // Konfigurasi Modul
 
 // LCD
-LiquidCrystal_I2C lcd(0x27, 16, 2);
+LiquidCrystal_I2C lcd(0x27, 16, 2);         // setting alamat 12C(0X27), besar karakter untuk LCD 16X2 
 
 // Keypad
 const byte ROWS = 4;
