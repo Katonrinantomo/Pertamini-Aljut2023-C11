@@ -1,0 +1,17 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// DATABASE_URL="mysql://root:@localhost:3306/db_pertamini"
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Datalogger {
+  id        Int     @default(autoincrement()) @id
+  nominal   Int
+  waktuBeli String
+}
